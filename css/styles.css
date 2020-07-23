@@ -1,0 +1,94 @@
+/* Main body without grid-areas*/
+body {
+  margin: 0;
+  min-height: 100vh;
+  width: 100vw;
+  color: #fff;
+  background: #474747;
+  font-family: "Roboto", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* General purpose elements */
+h1,
+h2 {
+  font-weight: 200;
+  margin: 0;
+}
+
+h1 {
+  font-size: 4rem;
+}
+
+h2 {
+  font-size: 3rem;
+}
+
+p {
+  font-weight: 200;
+  font-size: 2rem;
+}
+
+/* Header navigation bar */
+.navbar {
+  background: #353535;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 30px;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.47);
+}
+
+.navbar__items {
+  list-style: none;
+  padding: 0;
+}
+
+.navbar__item {
+  display: inline;
+}
+
+.navbar__link {
+  font-weight: 200;
+  font-size: 1.5rem;
+  color: #fff;
+  text-decoration: none;
+  margin: 0 1rem 0;
+}
+
+/* Content */
+.section {
+  background: #646262;
+  box-shadow: -8px 4px 4px rgba(0, 0, 0, 0.47);
+  padding: 2rem;
+}
+
+.section__intro-title {
+  margin-bottom: 4rem;
+  text-align: end;
+}
+
+.section--odd {
+  border-radius: 0 25px 25px 0px;
+  margin: 2rem 2rem 2rem 0;
+}
+
+.section--even {
+  border-radius: 25px 0px 0px 25px;
+  margin: 2rem 0 2rem 2rem;
+  background: #c71ecb;
+}
+
+/* Footer */
+footer {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  background: #353535;
+  color: #fff;
+  font-weight: 200;
+  padding: 0.25rem;
+  margin-top: auto;
+}
