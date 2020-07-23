@@ -23,12 +23,12 @@ class NavbarBuilder extends ComponentBuilder {
 
   getTemplate() {
     const navItems = Array.from(this.parent.querySelectorAll('section'))
-      .map(el => el.getAttribute('navItem'));
+      .map(el => el.getAttribute('id'));
     return `
       <header>
         <nav class="navbar">
           <ul class="navbar__items">
-            ${navItems.map(navItem => `<li class="navbar__item"><a class="navbar__link" href="./">${navItem}</a></li>`).join('')}
+            ${navItems.map(navItem => `<li class="navbar__item"><a class="navbar__link" href="#${navItem}">${navItem}</a></li>`).join('')}
           </ul>
         </nav>
       </header>
@@ -48,7 +48,7 @@ class SectionBuilder extends ComponentBuilder {
   getTemplate() {
     const modifier = this.idx % 2 === 0 ? 'section--even' : 'section--odd';
     return `
-      <section class="section ${modifier}" navItem="${this.navItem}">
+      <section class="section ${modifier}" id="${this.navItem}">
         <h2>${this.title}</h2>
         ${this.paragraphs.map(p => `<p>${p}</p>`).join('')}
       </section>
@@ -140,6 +140,14 @@ class App {
 
   initNavbar(parent) {
     const navbar = new NavbarBuilder(parent).build();
+    navbar.addEventListener('click', e => {
+      if (e.target.tagName === 'A') {
+        e.preventDefault();
+        const elementId = e.target.hash.slice(1);
+        const element = document.getElementById(elementId);
+        element.scrollIntoView({behavior: 'smooth'});
+      }
+    });
     this.insertAsFirstChild(parent, navbar);
   }
 
