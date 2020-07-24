@@ -127,3 +127,17 @@ footer {
     margin: 1rem 0 1rem 1rem;
   }
 }
+
+/* Bigger desktops */
+@media (min-width: 1600px) {
+  /* Content */
+  .section {
+    padding: 3rem;
+  }
+  .section--odd {
+    margin: 4rem 6rem 4rem 0;
+  }
+  .section--even {
+    margin: 4rem 0 4rem 6rem;
+  }
+}
