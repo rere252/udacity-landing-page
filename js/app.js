@@ -241,9 +241,9 @@ class App {
   }
 
   distanceFromY(y, entry) {
-    const rect = entry.boundingClientRect;
-    const upperEdge = rect.y;
-    const bottomEdge = upperEdge + rect.height;
+    const rect = entry.target.getBoundingClientRect();
+    const upperEdge = rect.top;
+    const bottomEdge = rect.bottom;
     const distanceFromUpperEdge = Math.abs(upperEdge - y);
     const distanceFromBottomEdge = Math.abs(bottomEdge - y);
     return Math.min(distanceFromUpperEdge, distanceFromBottomEdge);
