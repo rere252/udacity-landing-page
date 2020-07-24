@@ -22,8 +22,7 @@ class NavbarBuilder extends ComponentBuilder {
   }
 
   getTemplate() {
-    const navItems = Array.from(this.parent.querySelectorAll('section'))
-      .map(el => el.getAttribute('id'));
+    const navItems = Array.from(this.parent.querySelectorAll('section')).map(el => el.id);
     return `
       <header>
         <nav class="navbar">
@@ -80,7 +79,17 @@ class FooterBuilder extends ComponentBuilder {
   }
 }
 
+class ActiveSection {
+  constructor(element, distanceFromCenter) {
+    this.element = element;
+    this.distanceFromCenter = distanceFromCenter;
+  }
+}
+
 class App {
+  // Holds the element to highlight.
+  activeSection;
+
   init() {
     const fragment = new DocumentFragment();
     this.initSections(fragment);
@@ -131,11 +140,57 @@ class App {
       ).build(),
     ];
 
+    const sectionsObserver = new IntersectionObserver(
+      obsEntries => this.setClosestToCenterYAsActive(obsEntries),
+      {
+        threshold: 0.3
+      }
+    );
     const fragment = new DocumentFragment();
+
     for (const section of sections) {
+      sectionsObserver.observe(section);
       fragment.appendChild(section);
     }
+
     parent.appendChild(fragment);
+  }
+
+  /*
+    In case multiple entries compete for the active spot.
+  */
+  setClosestToCenterYAsActive(obsEntries) {
+    const availableHeight = window.innerHeight;
+    const centerY = availableHeight / 2;
+    let activeCandidate = new ActiveSection(null, Number.MAX_VALUE);
+    const intersectingEntries = obsEntries.filter(oe => oe.isIntersecting);
+    if (intersectingEntries.length > 0) {
+      for (const entry of intersectingEntries) {
+        const distanceFromY = this.distanceFromY(centerY, entry);
+        if (distanceFromY < activeCandidate.distanceFromCenter) {
+          activeCandidate = new ActiveSection(entry.target, distanceFromY);
+        }
+      }
+      this.setAsActive(activeCandidate);
+    }
+  }
+
+  distanceFromY(y, entry) {
+    const rect = entry.boundingClientRect;
+    const upperEdge = rect.y;
+    const bottomEdge = upperEdge + rect.height;
+    const distanceFromUpperEdge = Math.abs(upperEdge - y);
+    const distanceFromBottomEdge = Math.abs(bottomEdge - y);
+    return Math.min(distanceFromUpperEdge, distanceFromBottomEdge);
+  }
+
+  setAsActive(sectionToActivate) {
+    const sectionActive = 'section--active';
+    if (this.activeSection) {
+      this.activeSection.element.classList.toggle(sectionActive);
+    }
+    sectionToActivate.element.classList.toggle(sectionActive);
+    this.activeSection = sectionToActivate;
   }
 
   initNavbar(parent) {

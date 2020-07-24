@@ -63,6 +63,7 @@ p {
   background: #646262;
   box-shadow: -8px 4px 4px rgba(0, 0, 0, 0.47);
   padding: 2rem;
+  transition: box-shadow 1s;
 }
 
 .section__intro-title {
@@ -75,10 +76,18 @@ p {
   margin: 2rem 2rem 2rem 0;
 }
 
+.section--odd.section--active {
+  box-shadow: -0.5rem 0 5rem #fff;
+}
+
 .section--even {
   border-radius: 25px 0px 0px 25px;
   margin: 2rem 0 2rem 2rem;
   background: #c71ecb;
+}
+
+.section--even.section--active {
+  box-shadow: 0.5rem 0 5rem #c71ecb;
 }
 
 /* Footer */
