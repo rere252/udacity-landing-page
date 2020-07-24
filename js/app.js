@@ -22,12 +22,19 @@ class NavbarBuilder extends ComponentBuilder {
   }
 
   getTemplate() {
-    const navItems = Array.from(this.parent.querySelectorAll('section')).map(el => el.id);
+    const navItems = Array.from(this.parent.querySelectorAll('section')).map(
+      (el) => el.id
+    );
     return `
       <header>
         <nav class="navbar">
           <ul class="navbar__items">
-            ${navItems.map(navItem => `<li class="navbar__item"><a class="navbar__link" href="#${navItem}">${navItem}</a></li>`).join('')}
+            ${navItems
+              .map(
+                (navItem) =>
+                  `<li class="navbar__item"><a class="navbar__link" href="#${navItem}">${navItem}</a></li>`
+              )
+              .join('')}
           </ul>
         </nav>
       </header>
@@ -49,7 +56,7 @@ class SectionBuilder extends ComponentBuilder {
     return `
       <section class="section ${modifier}" id="${this.navItem}">
         <h2>${this.title}</h2>
-        ${this.paragraphs.map(p => `<p>${p}</p>`).join('')}
+        ${this.paragraphs.map((p) => `<p>${p}</p>`).join('')}
       </section>
     `;
   }
@@ -58,12 +65,14 @@ class SectionBuilder extends ComponentBuilder {
 class IntroSectionBuilder extends SectionBuilder {
   constructor(introHeader, idx, navItem, title, ...paragraphs) {
     super(idx, navItem, title, ...paragraphs);
-    this.introHeader = introHeader
+    this.introHeader = introHeader;
   }
 
   build() {
     const section = super.build();
-    const heading = this.elementFromHTML(`<h1 class="section__intro-title">${this.introHeader}</h1>`);
+    const heading = this.elementFromHTML(
+      `<h1 class="section__intro-title">${this.introHeader}</h1>`
+    );
     section.insertBefore(heading, section.firstElementChild);
     return section;
   }
@@ -94,12 +103,12 @@ class App {
   init() {
     const fragment = new DocumentFragment();
     this.initSections(fragment);
-    this.initSectionsObserver(fragment);
     // Navbar is supposed to be dynamic and determined by the sections (project requirement).
     this.initNavbar(fragment);
     this.initFooter(fragment);
     // Render what's been built.
     this.attachToBody(fragment);
+    this.listenForCenterSection();
   }
 
   attachToBody(fragment) {
@@ -152,15 +161,24 @@ class App {
 
   initNavbar(parent) {
     const navbar = new NavbarBuilder(parent).build();
-    navbar.addEventListener('click', e => {
+    this.initNavItemClickHandler(navbar);
+    this.insertAsFirstChild(parent, navbar);
+  }
+
+  initNavItemClickHandler(navbar) {
+    navbar.addEventListener('click', (e) => {
       if (e.target.tagName === 'A') {
         e.preventDefault();
         const elementId = e.target.hash.slice(1);
         const element = document.getElementById(elementId);
-        element.scrollIntoView({behavior: 'smooth'});
+        const elementRect = element.getBoundingClientRect();
+        window.scrollTo({
+          behavior: 'smooth',
+          left: 0,
+          top: elementRect.y,
+        });
       }
     });
-    this.insertAsFirstChild(parent, navbar);
   }
 
   initFooter(parent) {
@@ -168,64 +186,32 @@ class App {
     parent.appendChild(footer);
   }
 
-  initSectionsObserver(parentFragment) {
-    // Different thresholds for different screen sizes.
-    const screenWidthQuery = window.matchMedia('(max-width: 700px)');
-    const cb = (isMobile, container) => {
-      if (this.sectionsObserver) {
-        this.sectionsObserver.disconnect();
-      }
-      this.sectionsObserver = new IntersectionObserver(
-        obsEntries => this.setClosestToCenterYAsActive(obsEntries),
-        {
-          threshold: isMobile ? 0.1 : 0.3
-        }
-      );
-      const sections = container.querySelectorAll('.section');
-      for (const section of sections) {
-        this.sectionsObserver.observe(section);
-      }
-    }
-    // Since media query listener only fires on changes, the inital call has to be done manually.
-    cb(screenWidthQuery.matches, parentFragment);
-    // document.body since parentFragment's nodes will have been attached to body by the time this fires.
-    screenWidthQuery.addListener(query => cb(query.matches, document.body));
+  listenForCenterSection() {
+    window.addEventListener('scroll', () => this.setCenterSectionAsActive());
+    // To activate the initial item without waiting for a scroll event.
+    this.setCenterSectionAsActive();
   }
 
-  /*
-    In case multiple entries compete for the active spot.
-  */
-  setClosestToCenterYAsActive(obsEntries) {
-    const availableHeight = window.innerHeight;
-    const centerY = availableHeight / 2;
-    let activeCandidate = new ActiveSection(null, Number.MAX_VALUE);
-    const intersectingEntries = obsEntries.filter(oe => oe.isIntersecting);
-    if (intersectingEntries.length > 0) {
-      for (const entry of intersectingEntries) {
-        const distanceFromY = this.distanceFromY(centerY, entry);
-        if (distanceFromY < activeCandidate.distanceFromCenter) {
-          activeCandidate = new ActiveSection(entry.target, distanceFromY);
-        }
+  setCenterSectionAsActive() {
+    const centerY = window.innerHeight / 2;
+    const centerX = window.innerWidth / 2;
+    const sections = document
+      .elementsFromPoint(centerX, centerY)
+      .filter((e) => e.classList.contains('section'));
+    if (sections.length > 0) {
+      const centerSection = sections[0];
+      if (!this.activeSection || centerSection.id !== this.activeSection.id) {
+        this.setAsActive(centerSection);
       }
-      this.setAsActive(activeCandidate);
     }
-  }
-
-  distanceFromY(y, entry) {
-    const rect = entry.boundingClientRect;
-    const upperEdge = rect.y;
-    const bottomEdge = upperEdge + rect.height;
-    const distanceFromUpperEdge = Math.abs(upperEdge - y);
-    const distanceFromBottomEdge = Math.abs(bottomEdge - y);
-    return Math.min(distanceFromUpperEdge, distanceFromBottomEdge);
   }
 
   setAsActive(sectionToActivate) {
     const sectionActive = 'section--active';
     if (this.activeSection) {
-      this.activeSection.element.classList.toggle(sectionActive);
+      this.activeSection.classList.toggle(sectionActive);
     }
-    sectionToActivate.element.classList.toggle(sectionActive);
+    sectionToActivate.classList.toggle(sectionActive);
     this.activeSection = sectionToActivate;
   }
 }
