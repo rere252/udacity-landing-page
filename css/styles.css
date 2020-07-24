@@ -71,7 +71,7 @@ p {
 
 .section__intro-title {
   margin-bottom: 4rem;
-  text-align: flex-end;
+  text-align: end;
 }
 
 .section--odd {
