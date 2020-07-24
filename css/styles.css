@@ -66,6 +66,7 @@ p {
   box-shadow: -8px 4px 4px rgba(0, 0, 0, 0.47);
   padding: 2rem;
   transition: box-shadow 1s;
+  z-index: -1;
 }
 
 .section__intro-title {
