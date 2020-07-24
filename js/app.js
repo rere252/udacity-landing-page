@@ -87,12 +87,14 @@ class ActiveSection {
 }
 
 class App {
+  sectionsObserver;
   // Holds the element to highlight.
   activeSection;
 
   init() {
     const fragment = new DocumentFragment();
     this.initSections(fragment);
+    this.initSectionsObserver(fragment);
     // Navbar is supposed to be dynamic and determined by the sections (project requirement).
     this.initNavbar(fragment);
     this.initFooter(fragment);
@@ -140,20 +142,54 @@ class App {
       ).build(),
     ];
 
-    const sectionsObserver = new IntersectionObserver(
-      obsEntries => this.setClosestToCenterYAsActive(obsEntries),
-      {
-        threshold: 0.3
-      }
-    );
     const fragment = new DocumentFragment();
-
     for (const section of sections) {
-      sectionsObserver.observe(section);
       fragment.appendChild(section);
     }
 
     parent.appendChild(fragment);
+  }
+
+  initNavbar(parent) {
+    const navbar = new NavbarBuilder(parent).build();
+    navbar.addEventListener('click', e => {
+      if (e.target.tagName === 'A') {
+        e.preventDefault();
+        const elementId = e.target.hash.slice(1);
+        const element = document.getElementById(elementId);
+        element.scrollIntoView({behavior: 'smooth'});
+      }
+    });
+    this.insertAsFirstChild(parent, navbar);
+  }
+
+  initFooter(parent) {
+    const footer = new FooterBuilder().build();
+    parent.appendChild(footer);
+  }
+
+  initSectionsObserver(parentFragment) {
+    // Different thresholds for different screen sizes.
+    const screenWidthQuery = window.matchMedia('(max-width: 700px)');
+    const cb = (isMobile, container) => {
+      if (this.sectionsObserver) {
+        this.sectionsObserver.disconnect();
+      }
+      this.sectionsObserver = new IntersectionObserver(
+        obsEntries => this.setClosestToCenterYAsActive(obsEntries),
+        {
+          threshold: isMobile ? 0.1 : 0.3
+        }
+      );
+      const sections = container.querySelectorAll('.section');
+      for (const section of sections) {
+        this.sectionsObserver.observe(section);
+      }
+    }
+    // Since media query listener only fires on changes, the inital call has to be done manually.
+    cb(screenWidthQuery.matches, parentFragment);
+    // document.body since parentFragment's nodes will have been attached to body by the time this fires.
+    screenWidthQuery.addListener(query => cb(query.matches, document.body));
   }
 
   /*
@@ -191,24 +227,6 @@ class App {
     }
     sectionToActivate.element.classList.toggle(sectionActive);
     this.activeSection = sectionToActivate;
-  }
-
-  initNavbar(parent) {
-    const navbar = new NavbarBuilder(parent).build();
-    navbar.addEventListener('click', e => {
-      if (e.target.tagName === 'A') {
-        e.preventDefault();
-        const elementId = e.target.hash.slice(1);
-        const element = document.getElementById(elementId);
-        element.scrollIntoView({behavior: 'smooth'});
-      }
-    });
-    this.insertAsFirstChild(parent, navbar);
-  }
-
-  initFooter(parent) {
-    const footer = new FooterBuilder().build();
-    parent.appendChild(footer);
   }
 }
 
