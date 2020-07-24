@@ -9,6 +9,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 300px;
+  overflow-x: hidden;
 }
 
 /* General purpose elements */
