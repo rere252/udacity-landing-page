@@ -70,7 +70,7 @@ p {
 
 .section__intro-title {
   margin-bottom: 4rem;
-  text-align: end;
+  text-align: flex-end;
 }
 
 .section--odd {
@@ -108,11 +108,11 @@ footer {
 @media (max-width: 700px) {
   /* Nav */
   .navbar {
-    justify-content: end;
+    justify-content: flex-end;
   }
   .navbar__items {
     flex-flow: column nowrap;
-    align-items: end;
+    align-items: flex-end;
   }
 
   /* Content */
