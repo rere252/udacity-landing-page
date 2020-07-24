@@ -81,7 +81,7 @@ p {
 }
 
 .section--odd.section--active {
-  box-shadow: -0.5rem 0 5rem #fff;
+  box-shadow: -0.5rem 0 3rem 0.75rem #fff;
 }
 
 .section--even {
@@ -91,7 +91,7 @@ p {
 }
 
 .section--even.section--active {
-  box-shadow: 0.5rem 0 5rem #ec00ff;
+  box-shadow: 0.5rem 0 3rem 0.75rem #ec00ff;
 }
 
 /* Footer */

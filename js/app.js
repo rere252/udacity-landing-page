@@ -30,11 +30,11 @@ class NavbarBuilder extends ComponentBuilder {
         <nav class="navbar">
           <ul class="navbar__items">
             ${navItems
-              .map(
-                (navItem) =>
-                  `<li class="navbar__item"><a class="navbar__link" href="#${navItem}">${navItem}</a></li>`
-              )
-              .join('')}
+        .map(
+          (navItem) =>
+            `<li class="navbar__item"><a class="navbar__link" href="#${navItem}">${navItem}</a></li>`
+        )
+        .join('')}
           </ul>
         </nav>
       </header>
@@ -89,26 +89,30 @@ class FooterBuilder extends ComponentBuilder {
 }
 
 class ActiveSection {
-  constructor(element, distanceFromCenter) {
-    this.element = element;
+  constructor(target, distanceFromCenter) {
+    this.target = target;
     this.distanceFromCenter = distanceFromCenter;
   }
 }
 
 class App {
-  sectionsObserver;
+  intersectingSections;
   // Holds the element to highlight.
   activeSection;
+
+  constructor() {
+    this.intersectingSections = {};
+  }
 
   init() {
     const fragment = new DocumentFragment();
     this.initSections(fragment);
+    this.initSectionsObserver(fragment);
     // Navbar is supposed to be dynamic and determined by the sections (project requirement).
     this.initNavbar(fragment);
     this.initFooter(fragment);
     // Render what's been built.
     this.attachToBody(fragment);
-    this.listenForCenterSection();
   }
 
   attachToBody(fragment) {
@@ -166,19 +170,22 @@ class App {
   }
 
   initNavItemClickHandler(navbar) {
-    navbar.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A') {
-        e.preventDefault();
-        const elementId = e.target.hash.slice(1);
-        const element = document.getElementById(elementId);
-        const elementRect = element.getBoundingClientRect();
-        window.scrollTo({
-          behavior: 'smooth',
-          left: 0,
-          top: elementRect.y,
-        });
+    navbar.addEventListener(
+      'click',
+      (e) => {
+        if (e.target.tagName === 'A') {
+          e.preventDefault();
+          const elementId = e.target.hash.slice(1);
+          const element = document.getElementById(elementId);
+          const elementRect = element.getBoundingClientRect();
+          window.scrollTo({
+            behavior: 'smooth',
+            left: 0,
+            top: elementRect.y,
+          });
+        }
       }
-    });
+    );
   }
 
   initFooter(parent) {
@@ -186,24 +193,60 @@ class App {
     parent.appendChild(footer);
   }
 
-  listenForCenterSection() {
-    window.addEventListener('scroll', () => this.setCenterSectionAsActive());
-    // To activate the initial item without waiting for a scroll event.
-    this.setCenterSectionAsActive();
+  initSectionsObserver(parent) {
+    let currentThreshold = 0;
+    const threshStep = 0.04;
+    const threshCount = Math.floor(1 / threshStep) - 1;
+    const thresholds = Array(threshCount).fill(0).map(() => currentThreshold += threshStep);
+    const observer = new IntersectionObserver(
+      obsEntries => this.setClosestToCenterYAsActive(obsEntries),
+      {
+        threshold: thresholds
+      }
+    );
+    const sections = parent.querySelectorAll('.section');
+    for (const section of sections) {
+      observer.observe(section);
+    }
   }
 
-  setCenterSectionAsActive() {
-    const centerY = window.innerHeight / 2;
-    const centerX = window.innerWidth / 2;
-    const sections = document
-      .elementsFromPoint(centerX, centerY)
-      .filter((e) => e.classList.contains('section'));
-    if (sections.length > 0) {
-      const centerSection = sections[0];
-      if (!this.activeSection || centerSection.id !== this.activeSection.id) {
-        this.setAsActive(centerSection);
+  /*
+    In case multiple entries compete for the active spot.
+  */
+  setClosestToCenterYAsActive(obsEntries) {
+    this.updateIntersectingSectionsMap(obsEntries);
+    const activeEntries = Object.values(this.intersectingSections);
+    const availableHeight = window.innerHeight;
+    const centerY = availableHeight / 2;
+    let activeCandidate = new ActiveSection(null, Number.MAX_VALUE);
+    if (activeEntries.length > 0) {
+      for (const entry of activeEntries) {
+        const distanceFromY = this.distanceFromY(centerY, entry);
+        if (!activeCandidate.target || distanceFromY < activeCandidate.distanceFromCenter) {
+          activeCandidate = new ActiveSection(entry.target, distanceFromY);
+        }
       }
+      this.setAsActive(activeCandidate.target);
     }
+  }
+
+  updateIntersectingSectionsMap(obsEntries) {
+    obsEntries.forEach(oe => {
+      if (oe.isIntersecting) {
+        this.intersectingSections[oe.target.id] = oe;
+      } else {
+        delete this.intersectingSections[oe.target.id];
+      }
+    });
+  }
+
+  distanceFromY(y, entry) {
+    const rect = entry.boundingClientRect;
+    const upperEdge = rect.y;
+    const bottomEdge = upperEdge + rect.height;
+    const distanceFromUpperEdge = Math.abs(upperEdge - y);
+    const distanceFromBottomEdge = Math.abs(bottomEdge - y);
+    return Math.min(distanceFromUpperEdge, distanceFromBottomEdge);
   }
 
   setAsActive(sectionToActivate) {
